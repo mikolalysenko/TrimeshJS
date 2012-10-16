@@ -1,0 +1,13 @@
+{
+  "name": "riemann",
+  "description": "Tools for processing triangulated meshes in Javascript",
+  "author": "Mikola Lysenko <mikolalysenko@gmail.com>",
+  "dependencies": {
+  },
+  "devDependencies": {
+    "vows": "0.6.x",
+    "browserify": "1.16.x",
+    "uglify-js": "1.3.3"
+  },
+  "engine": "node >= 0.8"
+}

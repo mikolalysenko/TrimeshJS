@@ -1,4 +1,4 @@
 Riemann
 =======
 
-Tools for working with triangulated models of embedded Riemannian surfaces.
+A set of tools for working with triangulated surface meshes in JavaScript.
