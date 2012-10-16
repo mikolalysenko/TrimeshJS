@@ -83,9 +83,29 @@ vows.describe("distance.js").addBatch({
     },
     
     'sphere': {
-      topic: shapes.sphere(1.0, 50),
+      topic: shapes.sphere_mesh(10, 1.0),
       
-      'testing sphere pairwise distances': function(mesh) {
+      'testing sphere pairwise distances': function(sphere) {
+      
+        for(var i=0; i<100; ++i) {
+          var p_idx = Math.floor(Math.random() * sphere.positions.length);
+          var distances = distance.distance_to_point(sphere, p_idx);
+          var p = sphere.positions[p_idx];
+          
+          for(var j=0; j<sphere.positions.length; ++j) {
+            var q = sphere.positions[j];
+            var angle = 0.0;
+            for(var k=0; k<3; ++k) {
+              angle += p[k] * q[k];
+            }
+            angle = Math.min(1.0, Math.max(-1.0, angle));
+            angle = Math.acos(angle);
+            
+            assert.ok(Math.abs(distances[j] - angle) < Math.PI / 5, "Incorrect distance from " + i + "->" + j + ". Expected: " + angle + ", got: " + distances[j]);
+          }
+          
+          
+        }
       
       }
     },

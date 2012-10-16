@@ -1,3 +1,4 @@
+"use strict";
 var repair = require('./repair.js');
 
 //Creates a grid mesh
@@ -23,10 +24,12 @@ function grid_mesh(nx, ny) {
 }
 
 //Creates a cubical mesh
-function cube_mesh(res, scale) {
+// resolution is an integer representing number of subdivisions per linear dimension
+// scale is a 3d vector representing the scale of the cube
+function cube_mesh(resolution, scale) {
 
-  var radius = res >> 1;
-  var side_len = 2*res + 1;
+  var radius = resolution >> 1;
+  var side_len = 2*radius + 1;
   function p(x,y,s) { 
     return x + side_len * (y + side_len * s); 
   }
@@ -46,30 +49,41 @@ function cube_mesh(res, scale) {
       x[v] = -radius;
       x[d] = (1 - 2*s) * radius;
     
-      for(var j=0; j<=side_len; ++j, ++x[v])
-      for(var i=0; i<=side_len; ++i, ++x[u]) {
-      
-        var pos = new Array(3);
-        for(var k=0; k<3; ++k) {
-          pos[k] = x[k] * scale[k] / radius;
-        }
-      
-        positions[p(i, j, f)] = pos;
+      for(var j=0; j<side_len; ++j, ++x[v]) {
+        x[u] = -radius;
+        for(var i=0; i<side_len; ++i, ++x[u]) {
+          var pos = new Array(3);
+          for(var k=0; k<3; ++k) {
+            pos[k] = x[k] * scale[k] / radius;
+          }
         
-        if(i < side_len && j<side_len) {
-          faces.push([ p(i,j,f), p(i+1,j,f), p(i,j+1,f) ]);
-          faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);
+          positions[p(i, j, f)] = pos;
+          
+          if(i < side_len-1 && j < side_len-1) {
+            if(s) {
+              faces.push([ p(i,j,f), p(i+1,j,f), p(i,j+1,f) ]);
+              faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);
+            } else {
+              faces.push([ p(i,j,f), p(i,j+1,f), p(i+1,j,f) ]);
+              faces.push([ p(i,j+1,f), p(i+1,j,f), p(i+1,j+1,f) ]);          
+            }
+          }
         }
       }
     }
   }
 
-  return repair.fuse_vertices({positions: positions, faces: faces});
+  //Glue 6 faces together and return
+  var tol = 0.5 * Math.min(scale[0], Math.min(scale[1], scale[2])) / radius;
+  return repair.fuse_vertices({positions: positions, faces: faces}, tol);
 };
 
 
-function sphere_mesh(radius) {
-  var base = cube_mesh(radius);
+//Creates a spherical mesh
+//  resolution is an integer representing number of (vertices/6)^(1/2)
+//  radius is the radius of the sphere
+function sphere_mesh(resolution, radius) {
+  var base = cube_mesh(resolution, [1,1,1]);
   
   for(var i=0; i<base.positions.length; ++i) {
     var p = base.positions[i];
@@ -77,9 +91,9 @@ function sphere_mesh(radius) {
     for(var j=0; j<3; ++j) {
       l += p[j] * p[j];
     }
-    l = 1.0 / Math.sqrt(l);
+    l = radius / Math.sqrt(l);
     for(var j=0; j<3; ++j) {
-      p[j] *= l
+      p[j] *= l;
     }
   }
   
