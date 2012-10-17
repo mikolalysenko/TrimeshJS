@@ -89,7 +89,7 @@ exports.face_normals = function(mesh) {
     var f = faces[i];
     var pos = new Array(3);
     for(var j=0; j<3; ++j) {
-      pos[j] = f[j];
+      pos[j] = positions[f[j]];
     }
     
     var d01 = new Array(3);
