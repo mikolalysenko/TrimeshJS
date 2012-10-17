@@ -2,15 +2,13 @@
 
 A set of tools for working with triangulated surface meshes in JavaScript.
 
-# Install and Basic Usage
-
 ## Server side (node.js)
 
 First, install the library using npm:
 
     npm install trimesh
     
-Then include the library in your project:
+Then include the library in your project like usual:
 
     var trimesh = require('trimesh');
 
@@ -21,7 +19,7 @@ Add a reference to the script in your header:
 
     <script src="trimesh.min.js"></script>
     
-Then use the library as usual:
+Which will create an object called `trimesh` in the global namespace that contains the API:
 
     var mesh = trimesh.grid_mesh(10, 10);
 
