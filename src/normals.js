@@ -1,3 +1,5 @@
+var EPSILON = 1e-6;
+
 //Estimate the normals of a mesh
 exports.estimate_normals = function(mesh) {
   
@@ -47,7 +49,7 @@ exports.estimate_normals = function(mesh) {
         for(var k=0; k<3; ++k) {
           var u = (k+1)%3;
           var v = (k+2)%3;
-          norm[k] += w * (d01[u] * d21[v] - d01[v] * d21[u]);
+          norm[k] += w * (d21[u] * d01[v] - d21[v] * d01[u]);
         }
       }
     }
