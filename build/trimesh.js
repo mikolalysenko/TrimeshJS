@@ -405,7 +405,7 @@ exports.fuse_vertices = repair.fuse_vertices;
 //Isosurface functions
 exports.marching_cubes = require('./src/marchingcubes.js').marching_cubes;
 exports.marching_tetrahedra = require('./src/marchingtetrahedra.js').marching_tetrahedra;
-exports.surfacenets = require('./src/surfacenets.js').surfacenets;
+exports.surface_nets = require('./src/surfacenets.js').surface_nets;
 
 //Default shapes
 var shapes = require('./src/shapes.js');
