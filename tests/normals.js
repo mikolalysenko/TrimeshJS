@@ -1,6 +1,8 @@
 var vows = require('vows');
 var assert = require('assert');
-var estimate_normals = require('../src/normals.js').estimate_normals;
+var normals = require('../src/normals.js');
+var vertex_normals = normals.vertex_normals;
+var face_normals = normals.face_normals;
 var shapes = require('../src/shapes.js');
 
 
@@ -8,9 +10,9 @@ vows.describe("surface normals").addBatch({
   'normals' : {
     topic: shapes.sphere_mesh(20, 1.0),
     
-    'testing sphere normals': function(sphere) {
+    'testing vertex normals': function(sphere) {
     
-      var normals = estimate_normals(sphere);
+      var normals = vertex_normals(sphere);
       
       for(var i=0; i<normals.length; ++i) {
         var n = normals[i];
@@ -24,7 +26,17 @@ vows.describe("surface normals").addBatch({
         
         assert.ok(d < 1e-2, "Incorrect normal: " + JSON.stringify(n) + " vs. " + JSON.stringify(p) + ", err = " + d);
       }      
-    }
+    },
+    
+    
+    'testing face normals': function(sphere) {
+    
+      var normals = face_normals(sphere);
+      
+      //TODO: Test these
+    },
+    
+    
   },
 }).run();
 

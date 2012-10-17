@@ -1,8 +1,20 @@
 {
   "name": "trimesh",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Tools for processing triangulated meshes in Javascript",
-  "author": "Mikola Lysenko <mikolalysenko@gmail.com>",
+  "main": "index.js",
+  "author": {
+    "name": "Mikola Lysenko",
+    "email": "mikolalysenko@gmail.com",
+    "url": "http://0fps.net"
+  },
+  "license": "MIT",
+  "keywords": [
+    "mesh",
+    "surface",
+    "triangle",
+    "3d"
+  ],
   "dependencies": {
   },
   "devDependencies": {

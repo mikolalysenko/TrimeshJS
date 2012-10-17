@@ -12,7 +12,9 @@ exports.marching_tetrahedra = require('./src/marchingtetrahedra.js').marching_te
 exports.surface_nets = require('./src/surfacenets.js').surface_nets;
 
 //Surface normal estimation
-exports.estimate_normals = require('./src/normals.js').estimate_normals;
+var normals = require('./src/normals.js');
+exports.vertex_normals = normals.vertex_normals;
+exports.face_normals = normals.face_normals;
 
 //Surface distance
 exports.distance_to_point = require('./src/distance.js').distance_to_point;

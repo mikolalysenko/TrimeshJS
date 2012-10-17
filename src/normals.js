@@ -1,7 +1,7 @@
 var EPSILON = 1e-6;
 
-//Estimate the normals of a mesh
-exports.estimate_normals = function(mesh) {
+//Estimate the vertex normals of a mesh
+exports.vertex_normals = function(mesh) {
   
   var positions = mesh.positions;
   var faces     = mesh.faces;
@@ -75,6 +75,48 @@ exports.estimate_normals = function(mesh) {
   }
 
   //Return the resulting set of patches
+  return normals;
+}
+
+//Compute face normals of a mesh
+exports.face_normals = function(mesh) {
+  var positions = mesh.positions;
+  var faces     = mesh.faces;
+  var N         = faces.length;
+  var normals   = new Array(N);
+  
+  for(var i=0; i<N; ++i) {
+    var f = faces[i];
+    var pos = new Array(3);
+    for(var j=0; j<3; ++j) {
+      pos[j] = f[j];
+    }
+    
+    var d01 = new Array(3);
+    var d21 = new Array(3);
+    for(var j=0; j<3; ++j) {
+      d01[j] = p1[j] - p0[j];
+      d21[j] = p2[j] - p0[j];
+    }
+    
+    var n = new Array(3);
+    var l = 0.0;
+    for(var j=0; j<3; ++j) {
+      var u = (j+1)%3;
+      var v = (j+2)%3;
+      n[j] = d01[u] * d21[v] - d01[v] * d21[u];
+      l += n[j] * n[j];
+    }
+    if(l > EPSILON) {
+      l = 1.0 / Math.sqrt(l);
+    } else {
+      l = 0.0;
+    }
+    for(var j=0; j<3; ++j) {
+      n[j] *= l;
+    }
+    normals[i] = n;
+  }
   return normals;
 }
 
