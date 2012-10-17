@@ -407,15 +407,17 @@ exports.marching_cubes = require('./src/marchingcubes.js').marching_cubes;
 exports.marching_tetrahedra = require('./src/marchingtetrahedra.js').marching_tetrahedra;
 exports.surface_nets = require('./src/surfacenets.js').surface_nets;
 
-//Default shapes
+//Surface normal estimation
+exports.estimate_normals = require('./src/normals.js').estimate_normals;
+
+//Surface distance
+exports.distance_to_point = require('./src/distance.js').distance_to_point;
+
+//Test shapes
 var shapes = require('./src/shapes.js');
 exports.grid_mesh = shapes.grid_mesh;
 exports.cube_mesh = shapes.cube_mesh;
 exports.sphere_mesh = shapes.sphere_mesh;
-
-//Distance functions
-exports.distance_to_point = require('./src/distance.js').distance_to_point;
-
 
 
 });
@@ -1236,112 +1238,85 @@ exports.surface_nets = function(potential, dims) {
 
 });
 
-require.define("/src/shapes.js",function(require,module,exports,__dirname,__filename,process,global){"use strict";
-var repair = require('./repair.js');
-
-//Creates a grid mesh
-function grid_mesh(nx, ny) {
-  var positions = new Array((nx+1) * (ny+1));
-  for(var j=0; j<=ny; ++j) {
-    for(var i=0; i<=nx; ++i) {
-      positions[i + (nx+1)*j] = [i, j, 0];
-    }
+require.define("/src/normals.js",function(require,module,exports,__dirname,__filename,process,global){//Estimate the normals of a mesh
+exports.estimate_normals = function(mesh) {
+  
+  var positions = mesh.positions;
+  var faces     = mesh.faces;
+  var N         = positions.length;
+  var normals   = new Array(N);
+  
+  //Initialize normal array
+  for(var i=0; i<N; ++i) {
+    normals[i] = [0.0, 0.0, 0.0];
   }
   
-  function p(x,y) { return x + (nx+1)*y; };
-  
-  var faces     = [];
-  for(var j=0; j<ny; ++j) {
-    for(var i=0; i<nx; ++i) {
-      faces.push([ p(i,j), p(i+1, j), p(i, j+1) ]);
-      faces.push([ p(i+1,j), p(i+1,j+1), p(i,j+1) ]);
-    }
-  }
-
-  return {positions: positions, faces: faces};
-}
-
-//Creates a cubical mesh
-// resolution is an integer representing number of subdivisions per linear dimension
-// scale is a 3d vector representing the scale of the cube
-function cube_mesh(resolution, scale) {
-
-  var radius = resolution >> 1;
-  var side_len = 2*radius + 1;
-  function p(x,y,s) { 
-    return x + side_len * (y + side_len * s); 
-  }
-  
-  var positions = new Array(6 * side_len * side_len);
-  var faces = [];  
-  
-  for(var d=0; d<3; ++d) {
-    var u = (d+1)%3;
-    var v = (d+2)%3;
+  //Walk over all the faces and add per-vertex contribution to normal weights
+  for(var i=0; i<faces.length; ++i) {
+    var f = faces[i];
+    var p = 0;
+    var c = f[f.length-1];
+    var n = f[0];
+    for(var j=0; j<f.length; ++j) {
     
-    for(var s=0; s<2; ++s) {
-      var f = 2*d + s;
-      var x = new Array(3);
+      //Shift indices back
+      p = c;
+      c = n;
+      n = f[(j+1) % f.length];
+    
+      var v0 = positions[p];
+      var v1 = positions[c];
+      var v2 = positions[n];
       
-      x[u] = -radius;
-      x[v] = -radius;
-      x[d] = (1 - 2*s) * radius;
-    
-      for(var j=0; j<side_len; ++j, ++x[v]) {
-        x[u] = -radius;
-        for(var i=0; i<side_len; ++i, ++x[u]) {
-          var pos = new Array(3);
-          for(var k=0; k<3; ++k) {
-            pos[k] = x[k] * scale[k] / radius;
-          }
-        
-          positions[p(i, j, f)] = pos;
-          
-          if(i < side_len-1 && j < side_len-1) {
-            if(s) {
-              faces.push([ p(i,j,f), p(i+1,j,f), p(i,j+1,f) ]);
-              faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);
-            } else {
-              faces.push([ p(i,j,f), p(i,j+1,f), p(i+1,j,f) ]);
-              faces.push([ p(i,j+1,f), p(i+1,j,f), p(i+1,j+1,f) ]);          
-            }
-          }
+      //Compute arc lengths
+      var d01 = new Array(3);
+      var m01 = 0.0;
+      var d21 = new Array(3);
+      var m21 = 0.0;
+      for(var k=0; k<3; ++k) {
+        d01[k] = v0[k]  - v1[k];
+        m01   += d01[k] * d01[k];
+        d21[k] = v2[k]  - v1[k];
+        m21   += d21[k] * d21[k];
+      }
+
+      //Accumulate values in normal
+      if(m01 * m21 > EPSILON) {
+        var norm = normals[c];
+        var w = 1.0 / Math.sqrt(m01 * m21);
+        for(var k=0; k<3; ++k) {
+          var u = (k+1)%3;
+          var v = (k+2)%3;
+          norm[k] += w * (d01[u] * d21[v] - d01[v] * d21[u]);
         }
       }
     }
   }
-
-  //Glue 6 faces together and return
-  var tol = 0.5 * Math.min(scale[0], Math.min(scale[1], scale[2])) / radius;
-  return repair.fuse_vertices({positions: positions, faces: faces}, tol);
-};
-
-
-//Creates a spherical mesh
-//  resolution is an integer representing number of (vertices/6)^(1/2)
-//  radius is the radius of the sphere
-function sphere_mesh(resolution, radius) {
-  var base = cube_mesh(resolution, [1,1,1]);
   
-  for(var i=0; i<base.positions.length; ++i) {
-    var p = base.positions[i];
-    var l = 0.0;
-    for(var j=0; j<3; ++j) {
-      l += p[j] * p[j];
+  //Scale all normals to unit length
+  for(var i=0; i<N; ++i) {
+    var norm = normals[i];
+    var m = 0.0;
+    for(var k=0; k<3; ++k) {
+      m += norm[k] * norm[k];
     }
-    l = radius / Math.sqrt(l);
-    for(var j=0; j<3; ++j) {
-      p[j] *= l;
+    if(m > EPSILON) {
+      var w = 1.0 / Math.sqrt(m);
+      for(var k=0; k<3; ++k) {
+        norm[k] *= w;
+      }
+    } else {
+      for(var k=0; k<3; ++k) {
+        norm[k] = 0.0;
+      }
     }
   }
-  
-  return base;
+
+  //Return the resulting set of patches
+  return normals;
 }
 
 
-exports.grid_mesh = grid_mesh;
-exports.cube_mesh = cube_mesh;
-exports.sphere_mesh = sphere_mesh;
 
 });
 
@@ -3918,6 +3893,115 @@ if(typeof(exports) !== "undefined") {
   exports.BinaryHeap = BinaryHeap;
 }
 
+
+});
+
+require.define("/src/shapes.js",function(require,module,exports,__dirname,__filename,process,global){"use strict";
+var repair = require('./repair.js');
+
+//Creates a grid mesh
+function grid_mesh(nx, ny) {
+  var positions = new Array((nx+1) * (ny+1));
+  for(var j=0; j<=ny; ++j) {
+    for(var i=0; i<=nx; ++i) {
+      positions[i + (nx+1)*j] = [i, j, 0];
+    }
+  }
+  
+  function p(x,y) { return x + (nx+1)*y; };
+  
+  var faces     = [];
+  for(var j=0; j<ny; ++j) {
+    for(var i=0; i<nx; ++i) {
+      faces.push([ p(i,j), p(i+1, j), p(i, j+1) ]);
+      faces.push([ p(i+1,j), p(i+1,j+1), p(i,j+1) ]);
+    }
+  }
+
+  return {positions: positions, faces: faces};
+}
+
+//Creates a cubical mesh
+// resolution is an integer representing number of subdivisions per linear dimension
+// scale is a 3d vector representing the scale of the cube
+function cube_mesh(resolution, scale) {
+
+  var radius = resolution >> 1;
+  var side_len = 2*radius + 1;
+  function p(x,y,s) { 
+    return x + side_len * (y + side_len * s); 
+  }
+  
+  var positions = new Array(6 * side_len * side_len);
+  var faces = [];  
+  
+  for(var d=0; d<3; ++d) {
+    var u = (d+1)%3;
+    var v = (d+2)%3;
+    
+    for(var s=0; s<2; ++s) {
+      var f = 2*d + s;
+      var x = new Array(3);
+      
+      x[u] = -radius;
+      x[v] = -radius;
+      x[d] = (1 - 2*s) * radius;
+    
+      for(var j=0; j<side_len; ++j, ++x[v]) {
+        x[u] = -radius;
+        for(var i=0; i<side_len; ++i, ++x[u]) {
+          var pos = new Array(3);
+          for(var k=0; k<3; ++k) {
+            pos[k] = x[k] * scale[k] / radius;
+          }
+        
+          positions[p(i, j, f)] = pos;
+          
+          if(i < side_len-1 && j < side_len-1) {
+            if(s) {
+              faces.push([ p(i,j,f), p(i+1,j,f), p(i,j+1,f) ]);
+              faces.push([ p(i,j+1,f), p(i+1,j,f), p(i+1,j+1,f) ]);
+            } else {
+              faces.push([ p(i,j,f), p(i,j+1,f), p(i+1,j,f) ]);
+              faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);          
+            }
+          }
+        }
+      }
+    }
+  }
+
+  //Glue 6 faces together and return
+  var tol = 0.5 * Math.min(scale[0], Math.min(scale[1], scale[2])) / radius;
+  return repair.fuse_vertices({positions: positions, faces: faces}, tol);
+};
+
+
+//Creates a spherical mesh
+//  resolution is an integer representing number of (vertices/6)^(1/2)
+//  radius is the radius of the sphere
+function sphere_mesh(resolution, radius) {
+  var base = cube_mesh(resolution, [1,1,1]);
+  
+  for(var i=0; i<base.positions.length; ++i) {
+    var p = base.positions[i];
+    var l = 0.0;
+    for(var j=0; j<3; ++j) {
+      l += p[j] * p[j];
+    }
+    l = radius / Math.sqrt(l);
+    for(var j=0; j<3; ++j) {
+      p[j] *= l;
+    }
+  }
+  
+  return base;
+}
+
+
+exports.grid_mesh = grid_mesh;
+exports.cube_mesh = cube_mesh;
+exports.sphere_mesh = sphere_mesh;
 
 });
 

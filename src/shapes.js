@@ -62,10 +62,10 @@ function cube_mesh(resolution, scale) {
           if(i < side_len-1 && j < side_len-1) {
             if(s) {
               faces.push([ p(i,j,f), p(i+1,j,f), p(i,j+1,f) ]);
-              faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);
+              faces.push([ p(i,j+1,f), p(i+1,j,f), p(i+1,j+1,f) ]);
             } else {
               faces.push([ p(i,j,f), p(i,j+1,f), p(i+1,j,f) ]);
-              faces.push([ p(i,j+1,f), p(i+1,j,f), p(i+1,j+1,f) ]);          
+              faces.push([ p(i+1,j,f), p(i,j+1,f), p(i+1,j+1,f) ]);          
             }
           }
         }
