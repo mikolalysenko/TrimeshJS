@@ -82,6 +82,7 @@ vows.describe("distance.js").addBatch({
       }      
     },
     
+    //This still doesn't quite work...
     'sphere': {
       topic: shapes.sphere_mesh(10, 1.0),
       
@@ -89,10 +90,10 @@ vows.describe("distance.js").addBatch({
       
         for(var i=0; i<100; ++i) {
           var p_idx = Math.floor(Math.random() * sphere.positions.length);
-          var distances = distance.distance_to_point(sphere, p_idx);
+          var distances = distance.distance_to_point(sphere, p_idx, Math.PI/4.0);
           var p = sphere.positions[p_idx];
           
-          for(var j=0; j<sphere.positions.length; ++j) {
+          for(var j in distances) {
             var q = sphere.positions[j];
             var angle = 0.0;
             for(var k=0; k<3; ++k) {
@@ -101,10 +102,8 @@ vows.describe("distance.js").addBatch({
             angle = Math.min(1.0, Math.max(-1.0, angle));
             angle = Math.acos(angle);
             
-            assert.ok(Math.abs(distances[j] - angle) < Math.PI / 5, "Incorrect distance from " + i + "->" + j + ". Expected: " + angle + ", got: " + distances[j]);
+            assert.ok(Math.abs(distances[j] - angle) < 0.2, "Incorrect distance from " + i + "->" + j + ". Expected: " + angle + ", got: " + distances[j]);
           }
-          
-          
         }
       
       }

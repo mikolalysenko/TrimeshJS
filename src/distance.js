@@ -106,7 +106,7 @@ function distance_to_point(mesh, p, max_distance, tolerance, stars) {
         dist = Math.sqrt(dist) + d;
         
         //NOTE: This is quite correct, since we only have an upper bound on dist, not a lower bound...
-        if(dist <= 2.0 * max_distance) {
+        if(dist <= max_distance) {
           to_visit.push({d: dist, v:u});
         }
       }
@@ -114,10 +114,6 @@ function distance_to_point(mesh, p, max_distance, tolerance, stars) {
   }
   
   //Unpack distances into an array for easier processing
-  var vertices = [];
-  for(var v in distances) {
-    vertices.push(v);
-  }
   function compare_func(a, b) {
     return distances[a] - distances[b];
   }
@@ -127,10 +123,14 @@ function distance_to_point(mesh, p, max_distance, tolerance, stars) {
     var stabilized = true;
 
     //First, sort vertices by distance
+    var vertices = [];
+    for(var v in distances) {
+      vertices.push(v);
+    }
     vertices.sort(compare_func);
     
-    //Next, walk over vertices in order of distance
-    for(var mm=0; mm<vertices.length; ++mm) {
+      //Next, walk over vertices in order of distance
+      for(var mm=0; mm<vertices.length; ++mm) {
       var v     = vertices[mm];
       if(distances[v] > max_distance) {
         break;
@@ -145,12 +145,11 @@ function distance_to_point(mesh, p, max_distance, tolerance, stars) {
         var face = faces[nbhd[nn]].slice(0);
         face.sort(compare_func);
         
-        if(Math.abs(distances[face[1]] - distances[face[2]]) < tolerance) {
+        if(Math.abs(distances[face[1]] - distances[face[2]]) < 1e-6) {
           continue;
         }
         
         //Compute new distance estimate for farthest point
-        var o_distance = distances[face[2]];
         var n_distance = quadratic_distance(
             positions[face[0]],
             positions[face[1]],
@@ -158,6 +157,11 @@ function distance_to_point(mesh, p, max_distance, tolerance, stars) {
             distances[face[0]],
             distances[face[1]],
             -1);
+        if(n_distance > max_distance) {
+          continue;
+        }
+        
+        var o_distance = distances[face[2]];
         
         //Update distance
         if(n_distance < o_distance && Math.abs(n_distance - o_distance) > tolerance) {
