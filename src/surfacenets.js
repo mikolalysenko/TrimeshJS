@@ -51,7 +51,7 @@ var buffer = new Array(4096);
 })();
 
 //Export function
-exports.surface_nets = function(data, dims) {
+exports.surface_nets = function(potential, dims) {
   
   var vertices = []
     , faces = []
@@ -83,11 +83,11 @@ exports.surface_nets = function(data, dims) {
     
       //Read in 8 field values around this vertex and store them in an array
       //Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-      var mask = 0, g = 0, idx = n;
-      for(var k=0; k<2; ++k, idx += dims[0]*(dims[1]-2))
-      for(var j=0; j<2; ++j, idx += dims[0]-2)      
-      for(var i=0; i<2; ++i, ++g, ++idx) {
-        var p = data[idx];
+      var mask = 0, g = 0;
+      for(var k=0; k<2; ++k)
+      for(var j=0; j<2; ++j)      
+      for(var i=0; i<2; ++i, ++g) {
+        var p = potential(x[0]+i, x[1]+j, x[2]+k);
         grid[g] = p;
         mask |= (p < 0) ? (1<<g) : 0;
       }

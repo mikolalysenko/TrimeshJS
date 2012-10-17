@@ -25,7 +25,7 @@ var cube_vertices = [
       , [0,1,6,4]
       , [5,6,1,4] ];
 
-exports.marching_tetrahedra = function(data, dims) {
+exports.marching_tetrahedra = function(potential, dims) {
    
    var vertices = []
     , faces = []
@@ -57,7 +57,8 @@ exports.marching_tetrahedra = function(data, dims) {
   for(x[0]=0; x[0]<dims[0]-1; ++x[0], ++n) {
     //Read in cube  
     for(var i=0; i<8; ++i) {
-      grid[i] = data[n + cube_vertices[i][0] + dims[0] * (cube_vertices[i][1] + dims[1] * cube_vertices[i][2])];
+      var cube_vert = cube_vertices[i];
+      grid[i] = potential(x[0]+cube_vert[0], x[1]+cube_vert[1], x[2]+cube_vert[2]);
     }
     for(var i=0; i<tetra_list.length; ++i) {
       var T = tetra_list[i]
@@ -166,6 +167,6 @@ exports.marching_tetrahedra = function(data, dims) {
     }
   }
   
-  return { vertices: vertices, faces: faces };
+  return { positions: vertices, faces: faces };
 }
 

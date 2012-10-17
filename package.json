@@ -1,5 +1,6 @@
 {
-  "name": "riemann",
+  "name": "trimesh",
+  "version": "0.0.2",
   "description": "Tools for processing triangulated meshes in Javascript",
   "author": "Mikola Lysenko <mikolalysenko@gmail.com>",
   "dependencies": {

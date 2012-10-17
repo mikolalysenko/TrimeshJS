@@ -308,13 +308,15 @@ var edgeTable= new Uint32Array([
     ,[0,1,1]]
   , edgeIndex = [ [0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7] ];
 
-exports.marching_cubes = function(data, dims) {
+
+
+exports.marching_cubes = function(potential, dims) {
   var vertices = []
     , faces = []
     , n = 0
-    , grid = new Float32Array(8)
-    , edges = new Int32Array(12)
-    , x = new Int32Array(3);
+    , grid = new Array(8)
+    , edges = new Array(12)
+    , x = [0,0,0];
   //March over the volume
   for(x[2]=0; x[2]<dims[2]-1; ++x[2], n+=dims[0])
   for(x[1]=0; x[1]<dims[1]-1; ++x[1], ++n)
@@ -323,7 +325,7 @@ exports.marching_cubes = function(data, dims) {
     var cube_index = 0;
     for(var i=0; i<8; ++i) {
       var v = cubeVerts[i]
-        , s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+        , s = potential(x[0]+v[0], x[1]+v[1], x[2]+v[2]);
       grid[i] = s;
       cube_index |= (s > 0) ? 1 << i : 0;
     }
@@ -359,6 +361,6 @@ exports.marching_cubes = function(data, dims) {
       faces.push([edges[f[i]], edges[f[i+1]], edges[f[i+2]]]);
     }
   }
-  return { vertices: vertices, faces: faces };
+  return { positions: vertices, faces: faces };
 };
 

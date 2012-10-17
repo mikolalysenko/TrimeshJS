@@ -813,13 +813,15 @@ var edgeTable= new Uint32Array([
     ,[0,1,1]]
   , edgeIndex = [ [0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7] ];
 
-exports.marching_cubes = function(data, dims) {
+
+
+exports.marching_cubes = function(potential, dims) {
   var vertices = []
     , faces = []
     , n = 0
-    , grid = new Float32Array(8)
-    , edges = new Int32Array(12)
-    , x = new Int32Array(3);
+    , grid = new Array(8)
+    , edges = new Array(12)
+    , x = [0,0,0];
   //March over the volume
   for(x[2]=0; x[2]<dims[2]-1; ++x[2], n+=dims[0])
   for(x[1]=0; x[1]<dims[1]-1; ++x[1], ++n)
@@ -828,7 +830,7 @@ exports.marching_cubes = function(data, dims) {
     var cube_index = 0;
     for(var i=0; i<8; ++i) {
       var v = cubeVerts[i]
-        , s = data[n + v[0] + dims[0] * (v[1] + dims[1] * v[2])];
+        , s = potential(x[0]+v[0], x[1]+v[1], x[2]+v[2]);
       grid[i] = s;
       cube_index |= (s > 0) ? 1 << i : 0;
     }
@@ -864,7 +866,7 @@ exports.marching_cubes = function(data, dims) {
       faces.push([edges[f[i]], edges[f[i+1]], edges[f[i+2]]]);
     }
   }
-  return { vertices: vertices, faces: faces };
+  return { positions: vertices, faces: faces };
 };
 
 
@@ -897,7 +899,7 @@ var cube_vertices = [
       , [0,1,6,4]
       , [5,6,1,4] ];
 
-exports.marching_tetrahedra = function(data, dims) {
+exports.marching_tetrahedra = function(potential, dims) {
    
    var vertices = []
     , faces = []
@@ -929,7 +931,8 @@ exports.marching_tetrahedra = function(data, dims) {
   for(x[0]=0; x[0]<dims[0]-1; ++x[0], ++n) {
     //Read in cube  
     for(var i=0; i<8; ++i) {
-      grid[i] = data[n + cube_vertices[i][0] + dims[0] * (cube_vertices[i][1] + dims[1] * cube_vertices[i][2])];
+      var cube_vert = cube_vertices[i];
+      grid[i] = potential(x[0]+cube_vert[0], x[1]+cube_vert[1], x[2]+cube_vert[2]);
     }
     for(var i=0; i<tetra_list.length; ++i) {
       var T = tetra_list[i]
@@ -1038,7 +1041,7 @@ exports.marching_tetrahedra = function(data, dims) {
     }
   }
   
-  return { vertices: vertices, faces: faces };
+  return { positions: vertices, faces: faces };
 }
 
 
@@ -1097,7 +1100,7 @@ var buffer = new Array(4096);
 })();
 
 //Export function
-exports.surface_nets = function(data, dims) {
+exports.surface_nets = function(potential, dims) {
   
   var vertices = []
     , faces = []
@@ -1129,11 +1132,11 @@ exports.surface_nets = function(data, dims) {
     
       //Read in 8 field values around this vertex and store them in an array
       //Also calculate 8-bit mask, like in marching cubes, so we can speed up sign checks later
-      var mask = 0, g = 0, idx = n;
-      for(var k=0; k<2; ++k, idx += dims[0]*(dims[1]-2))
-      for(var j=0; j<2; ++j, idx += dims[0]-2)      
-      for(var i=0; i<2; ++i, ++g, ++idx) {
-        var p = data[idx];
+      var mask = 0, g = 0;
+      for(var k=0; k<2; ++k)
+      for(var j=0; j<2; ++j)      
+      for(var i=0; i<2; ++i, ++g) {
+        var p = potential(x[0]+i, x[1]+j, x[2]+k);
         grid[g] = p;
         mask |= (p < 0) ? (1<<g) : 0;
       }
