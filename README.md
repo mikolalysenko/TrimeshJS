@@ -85,7 +85,7 @@ Conventions:
 
 ### `sphere_mesh` 
 
-# Examples
+
 
 # Acknowledgements
 
