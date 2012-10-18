@@ -1,6 +1,6 @@
 # trimesh.js
 
-trimesh.js is an ever expanding collection of algorithms for processing triangulated meshes in Javascript.
+... is an ever expanding collection of algorithms for processing triangulated meshes in Javascript.
 
 ## Server side (node.js)
 

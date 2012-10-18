@@ -20,17 +20,24 @@ exports.vertex_stars = function(args) {
   return stars;
 };
 
-/**
- *
- */
+// Compute all edges of a mesh
 exports.edges = function(args) {
   var faces = args.faces;
-  var edges = [];
+  var edges = { };
   
   for(var i=0; i<faces.length; ++i) {
     var f = faces[i];
-    
-    
+    for(var j=0; j<f.length; ++j) {
+      var e = [ f[j], f[(j+1)%f.length] ];
+      e.sort();
+      if(e in edges) {
+        edges[e].push(i);
+      } else {
+        edges[e] = [i];
+      }
+    }
   }
+  
+  return edges;
 }
 

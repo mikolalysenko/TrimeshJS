@@ -427,24 +427,45 @@ exports.sphere_mesh = shapes.sphere_mesh;
 require.define("/src/topology.js",function(require,module,exports,__dirname,__filename,process,global){/**
  * Returns an array containing the set of all faces incident to each vertex in the mesh.
  */
-function vertex_stars(mesh) {
-  var stars = new Array(mesh.positions.length);
+exports.vertex_stars = function(args) {
+  var vertex_count  = args.vertex_count;
+  var faces         = args.faces;
+
+  var stars = new Array(vertex_count);
   for(var i=0; i<stars.length; ++i) {
     stars[i] = [];
   }
   
-  var faces = mesh.faces;
   for(var i=0; i<faces.length; ++i) {  
     var f = faces[i];
     for(var j=0; j<f.length; ++j) {
       stars[f[j]].push(i);
     }
   }
+  
   return stars;
 };
 
-//Returns a list of stars
-exports.vertex_stars = vertex_stars;
+// Compute all edges of a mesh
+exports.edges = function(args) {
+  var faces = args.faces;
+  var edges = { };
+  
+  for(var i=0; i<faces.length; ++i) {
+    var f = faces[i];
+    for(var j=0; j<f.length; ++j) {
+      var e = [ f[j], f[(j+1)%f.length] ];
+      e.sort();
+      if(e in edges) {
+        edges[e].push(i);
+      } else {
+        edges[e] = [i];
+      }
+    }
+  }
+  
+  return edges;
+}
 
 
 });
@@ -452,18 +473,20 @@ exports.vertex_stars = vertex_stars;
 require.define("/src/repair.js",function(require,module,exports,__dirname,__filename,process,global){"use strict";
 
 //Fuses vertices in a mesh to remove cracks
-function fuse_vertices(mesh, tol) {  
-  if(!tol) {
-    tol = 1e-6;
-  }
+function fuse_vertices(args) {  
+  
+  //Unpack arguments
+  var positions   = args.positions;
+  var faces       = args.faces;
+  var tol         = args.tolerance || 1e-6;
   
   //First, fuse vertices together
   var grid        = {};
   var n_positions = [];
-  var n_index     = new Array(mesh.positions.length);
-  for(var i=0; i<mesh.positions.length; ++i) {
+  var n_index     = new Array(positions.length);
+  for(var i=0; i<positions.length; ++i) {
 
-    var p = mesh.positions[i];
+    var p = positions[i];
     var r = new Array(3);
     for(var j=0; j<3; ++j) {
       r[j] = Math.floor(p[j] / tol);
@@ -482,8 +505,8 @@ function fuse_vertices(mesh, tol) {
   
   //Then fix up faces
   var n_faces = [];
-  for(var i=0; i<mesh.faces.length; ++i) {
-    var face = mesh.faces[i].slice(0);
+  for(var i=0; i<faces.length; ++i) {
+    var face = faces[i].slice(0);
     var skip = false;
     for(var j=0; j<face.length; ++j) {
       face[j] = n_index[face[j]];
@@ -819,7 +842,10 @@ var edgeTable= new Uint32Array([
 
 
 
-exports.marching_cubes = function(potential, dims) {
+exports.marching_cubes = function(args) {
+  var potential = args.potential;
+  var dims      = args.resolution;
+
   var vertices = []
     , faces = []
     , n = 0
@@ -903,7 +929,10 @@ var cube_vertices = [
       , [0,1,6,4]
       , [5,6,1,4] ];
 
-exports.marching_tetrahedra = function(potential, dims) {
+exports.marching_tetrahedra = function(args) {
+
+  var potential = args.potential;
+  var dims      = args.resolution;
    
    var vertices = []
     , faces = []
@@ -1104,7 +1133,10 @@ var buffer = new Array(4096);
 })();
 
 //Export function
-exports.surface_nets = function(potential, dims) {
+exports.surface_nets = function(args) {
+
+  var potential = args.potential;
+  var dims      = args.resolution;
   
   var vertices = []
     , faces = []
@@ -1243,10 +1275,10 @@ exports.surface_nets = function(potential, dims) {
 require.define("/src/normals.js",function(require,module,exports,__dirname,__filename,process,global){var EPSILON = 1e-6;
 
 //Estimate the vertex normals of a mesh
-exports.vertex_normals = function(mesh) {
+exports.vertex_normals = function(args) {
   
-  var positions = mesh.positions;
-  var faces     = mesh.faces;
+  var positions = args.positions;
+  var faces     = args.faces;
   var N         = positions.length;
   var normals   = new Array(N);
   
@@ -1321,9 +1353,9 @@ exports.vertex_normals = function(mesh) {
 }
 
 //Compute face normals of a mesh
-exports.face_normals = function(mesh) {
-  var positions = mesh.positions;
-  var faces     = mesh.faces;
+exports.face_normals = function(args) {
+  var positions = args.positions;
+  var faces     = args.faces;
   var N         = faces.length;
   var normals   = new Array(N);
   
@@ -1422,22 +1454,17 @@ function quadratic_distance(a, b, c, dpa, dpb, orientation) {
   
 }
 
-
-
 //Computes a distances to a vertex p
-function distance_to_point(mesh, p, max_distance, tolerance, stars) {
-  if(!max_distance) {
-    max_distance = Number.POSITIVE_INFINITY;
-  }
-  if(!tolerance) {
-    tolerance = EPSILON;
-  }
-  if(!stars) {
-    stars = vertex_stars(mesh);
-  }
+function distance_to_point(args) {
 
-  var faces     = mesh.faces;
-  var positions = mesh.positions;
+  var positions   = args.positions;
+  var faces       = args.faces;
+  var p           = args.initial_vertex;
+  var stars       = args.stars 
+                  || vertex_stars({ vertex_count: positions.length, faces: faces });
+  var max_distance = args.max_distance 
+                  || Number.POSITIVE_INFINITY;
+  var tolerance   = args.tolerance || 1e-4;
 
   //First, run Dijkstra's algorithm to get an initial bound on the distance from each vertex
   // to the base point just using edge lengths
@@ -3946,7 +3973,10 @@ require.define("/src/shapes.js",function(require,module,exports,__dirname,__file
 var repair = require('./repair.js');
 
 //Creates a grid mesh
-function grid_mesh(nx, ny) {
+function grid_mesh(args) {
+  var nx = args.width   || 10;
+  var ny = args.height  || 10;
+
   var positions = new Array((nx+1) * (ny+1));
   for(var j=0; j<=ny; ++j) {
     for(var i=0; i<=nx; ++i) {
@@ -3970,7 +4000,10 @@ function grid_mesh(nx, ny) {
 //Creates a cubical mesh
 // resolution is an integer representing number of subdivisions per linear dimension
 // scale is a 3d vector representing the scale of the cube
-function cube_mesh(resolution, scale) {
+function cube_mesh(args) {
+
+  var resolution = args.resolution || 10;
+  var scale      = typeof(args.scale) === "number" ? [args.scale, args.scale, args.scale] : (args.scale || [1.0, 1.0, 1.0]);
 
   var radius = resolution >> 1;
   var side_len = 2*radius + 1;
@@ -4026,8 +4059,11 @@ function cube_mesh(resolution, scale) {
 //Creates a spherical mesh
 //  resolution is an integer representing number of (vertices/6)^(1/2)
 //  radius is the radius of the sphere
-function sphere_mesh(resolution, radius) {
-  var base = cube_mesh(resolution, [1,1,1]);
+function sphere_mesh(args) {
+  var resolution = args.resolution || 10;
+  var radius     = args.radius || 1.0;
+
+  var base = cube_mesh({ resolution: resolution });
   
   for(var i=0; i<base.positions.length; ++i) {
     var p = base.positions[i];
