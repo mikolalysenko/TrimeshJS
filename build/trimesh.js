@@ -397,6 +397,7 @@ require.define("/package.json",function(require,module,exports,__dirname,__filen
 require.define("/index.js",function(require,module,exports,__dirname,__filename,process,global){//Topology functions
 var topology = require('./src/topology.js');
 exports.vertex_stars = topology.vertex_stars;
+exports.edges        = topology.edges;
 
 //Mesh repair
 var repair = require('./src/repair.js');
@@ -413,7 +414,7 @@ exports.vertex_normals = normals.vertex_normals;
 exports.face_normals = normals.face_normals;
 
 //Surface distance
-exports.distance_to_point = require('./src/distance.js').distance_to_point;
+exports.surface_distance_to_point = require('./src/metric.js').surface_distance_to_point;
 
 //Test shapes
 var shapes = require('./src/shapes.js');
@@ -1398,7 +1399,7 @@ exports.face_normals = function(args) {
 
 });
 
-require.define("/src/distance.js",function(require,module,exports,__dirname,__filename,process,global){var assert = require('assert');
+require.define("/src/metric.js",function(require,module,exports,__dirname,__filename,process,global){var assert = require('assert');
 var BinaryHeap = require('./heap.js').BinaryHeap;
 var vertex_stars = require('./topology.js').vertex_stars;
 
@@ -1455,7 +1456,7 @@ function quadratic_distance(a, b, c, dpa, dpb, orientation) {
 }
 
 //Computes a distances to a vertex p
-function distance_to_point(args) {
+function surface_distance_to_point(args) {
 
   var positions   = args.positions;
   var faces       = args.faces;
@@ -1582,7 +1583,7 @@ function distance_to_point(args) {
 }
 
 exports.quadratic_distance = quadratic_distance;
-exports.distance_to_point = distance_to_point;
+exports.surface_distance_to_point = surface_distance_to_point;
 
 });
 

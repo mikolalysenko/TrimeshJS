@@ -55,7 +55,7 @@ function quadratic_distance(a, b, c, dpa, dpb, orientation) {
 }
 
 //Computes a distances to a vertex p
-function distance_to_point(args) {
+function surface_distance_to_point(args) {
 
   var positions   = args.positions;
   var faces       = args.faces;
@@ -182,4 +182,4 @@ function distance_to_point(args) {
 }
 
 exports.quadratic_distance = quadratic_distance;
-exports.distance_to_point = distance_to_point;
+exports.surface_distance_to_point = surface_distance_to_point;
