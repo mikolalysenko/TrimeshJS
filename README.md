@@ -29,7 +29,7 @@ Which will create an object called `trimesh` in the global namespace that contai
 
 Working with meshes is hard -- and yet it has to be done if we are to compute on surfaces. The situation is not helped by the enormous confusion of data structures for optimizing spatial and topological queries on meshes. Picking a single representation, like a winged edge, half edge or cell tuple complex brings with it many tradeoffs and introduces enormous complexity into algorithms which operate on these meshes. These choices cause implementations of mesh based algorithms to rapidly diverge, resulting in an enormous proliferation and duplication of effort. Clearly this situation is unacceptable from the stand point of interoperability and coder sanity.  The core philosophy of trimesh.js is a reaction to this offensive mess and can be summed up in the following central thesis:
 
-## Complicated mesh data structures are bullshit.
+> ** Complicated mesh data structures are bullshit. **
 
 The prescirption for this problem is radical simplicity. To avoid falling into the trap of overengineering that seems to sidetrack other mesh libraries, trimesh.js adopts a "Just the facts, ma'am" personality, with each method taking only enough data to answer the necessary basic queries required to implement the described functionality. Guided by these ideals, trimesh.js departs radically from other mesh libraries in the following ways:
 

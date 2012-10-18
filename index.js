@@ -1,6 +1,7 @@
 //Topology functions
 var topology = require('./src/topology.js');
 exports.vertex_stars = topology.vertex_stars;
+exports.edges        = topology.edges;
 
 //Mesh repair
 var repair = require('./src/repair.js');
