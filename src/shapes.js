@@ -2,7 +2,10 @@
 var repair = require('./repair.js');
 
 //Creates a grid mesh
-function grid_mesh(nx, ny) {
+function grid_mesh(args) {
+  var nx = args.width   || 10;
+  var ny = args.height  || 10;
+
   var positions = new Array((nx+1) * (ny+1));
   for(var j=0; j<=ny; ++j) {
     for(var i=0; i<=nx; ++i) {
@@ -26,7 +29,10 @@ function grid_mesh(nx, ny) {
 //Creates a cubical mesh
 // resolution is an integer representing number of subdivisions per linear dimension
 // scale is a 3d vector representing the scale of the cube
-function cube_mesh(resolution, scale) {
+function cube_mesh(args) {
+
+  var resolution = args.resolution || 10;
+  var scale      = typeof(args.scale) === "number" ? [args.scale, args.scale, args.scale] : (args.scale || [1.0, 1.0, 1.0]);
 
   var radius = resolution >> 1;
   var side_len = 2*radius + 1;
@@ -82,8 +88,11 @@ function cube_mesh(resolution, scale) {
 //Creates a spherical mesh
 //  resolution is an integer representing number of (vertices/6)^(1/2)
 //  radius is the radius of the sphere
-function sphere_mesh(resolution, radius) {
-  var base = cube_mesh(resolution, [1,1,1]);
+function sphere_mesh(args) {
+  var resolution = args.resolution || 10;
+  var radius     = args.radius || 1.0;
+
+  var base = cube_mesh({ resolution: resolution });
   
   for(var i=0; i<base.positions.length; ++i) {
     var p = base.positions[i];

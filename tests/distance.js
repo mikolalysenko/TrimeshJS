@@ -68,7 +68,11 @@ vows.describe("distance.js").addBatch({
       //Testing pairwise distances
       for(var j=0; j<mesh.positions.length; ++j) {
         var p = mesh.positions[j];
-        var distances = distance.distance_to_point(mesh, j);
+        var distances = distance.distance_to_point({
+          positions:mesh.positions,
+          faces: mesh.faces,
+          initial_vertex: j
+        });
         for(var i=0; i<mesh.positions.length; ++i) {
           var q = mesh.positions[i];
           var d = 0.0;
@@ -90,7 +94,12 @@ vows.describe("distance.js").addBatch({
       
         for(var i=0; i<100; ++i) {
           var p_idx = Math.floor(Math.random() * sphere.positions.length);
-          var distances = distance.distance_to_point(sphere, p_idx, Math.PI/4.0);
+          var distances = distance.distance_to_point({
+            positions: sphere.positions,
+            faces: sphere.faces, 
+            initial_vertex: p_idx, 
+            max_distance: Math.PI/4.0
+          });
           var p = sphere.positions[p_idx];
           
           for(var j in distances) {

@@ -51,7 +51,10 @@ var buffer = new Array(4096);
 })();
 
 //Export function
-exports.surface_nets = function(potential, dims) {
+exports.surface_nets = function(args) {
+
+  var potential = args.potential;
+  var dims      = args.resolution;
   
   var vertices = []
     , faces = []

@@ -35,8 +35,6 @@ vows.describe("surface normals").addBatch({
       
       //TODO: Test these
     },
-    
-    
   },
 }).run();
 

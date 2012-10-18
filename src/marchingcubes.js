@@ -310,7 +310,10 @@ var edgeTable= new Uint32Array([
 
 
 
-exports.marching_cubes = function(potential, dims) {
+exports.marching_cubes = function(args) {
+  var potential = args.potential;
+  var dims      = args.resolution;
+
   var vertices = []
     , faces = []
     , n = 0

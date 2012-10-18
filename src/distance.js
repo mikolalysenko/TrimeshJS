@@ -54,22 +54,17 @@ function quadratic_distance(a, b, c, dpa, dpb, orientation) {
   
 }
 
-
-
 //Computes a distances to a vertex p
-function distance_to_point(mesh, p, max_distance, tolerance, stars) {
-  if(!max_distance) {
-    max_distance = Number.POSITIVE_INFINITY;
-  }
-  if(!tolerance) {
-    tolerance = EPSILON;
-  }
-  if(!stars) {
-    stars = vertex_stars(mesh);
-  }
+function distance_to_point(args) {
 
-  var faces     = mesh.faces;
-  var positions = mesh.positions;
+  var positions   = args.positions;
+  var faces       = args.faces;
+  var p           = args.initial_vertex;
+  var stars       = args.stars 
+                  || vertex_stars({ vertex_count: positions.length, faces: faces });
+  var max_distance = args.max_distance 
+                  || Number.POSITIVE_INFINITY;
+  var tolerance   = args.tolerance || 1e-4;
 
   //First, run Dijkstra's algorithm to get an initial bound on the distance from each vertex
   // to the base point just using edge lengths

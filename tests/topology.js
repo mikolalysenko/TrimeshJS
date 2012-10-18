@@ -9,7 +9,10 @@ vows.describe("topology.js").addBatch({
     topic: shapes.grid_mesh(5, 5),
     
     'computing star' : function(mesh) {
-      var stars = topology.vertex_stars(mesh);
+      var stars = topology.vertex_stars({
+            vertex_count: mesh.positions.length
+          , faces:        mesh.faces 
+        });
       for(var i=0; i<stars.length; ++i) {
         var s = stars[i];
         for(var j=0; j<s.length; ++j) {

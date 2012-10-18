@@ -27,23 +27,25 @@ function validate_surface(mesh, potential) {
 
 //These tests kind of suck, but
 vows.describe("isosurfaces").addBatch({
-  'marching cubes': {
-    'sphere': function() {
-      validate_surface(marching_cubes(sphere, sphere_dims), sphere);
-    }
-  },
+  'sphere': {
+    
+    topic: {
+        potential: sphere
+      , resolution: sphere_dims
+    },
+    
+    'marching cubes': function(field) {
+      validate_surface(marching_cubes(field), field.potential);
+    },
   
-  'marching tets': {
-    'sphere': function() {
-      validate_surface(marching_tetrahedra(sphere, sphere_dims), sphere);
-    }
+    'marching tets': function(field) {
+      validate_surface(marching_tetrahedra(field), field.potential);
+    },
+    
+    'surface nets': function(field) {
+      validate_surface(surface_nets(field), field.potential);
+    }    
   },
-
-  'surface nets': {
-    'sphere': function() {
-      validate_surface(surface_nets(sphere, sphere_dims), sphere);
-    }
-  }
   
 }).run();
 

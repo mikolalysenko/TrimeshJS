@@ -16,8 +16,12 @@ vows.describe("repair.js").addBatch({
     },
     
     'fusing at tol = 0.01': function(mesh) {
-    
-      var fused = repair.fuse_vertices(mesh, 0.01);
+      var fused = repair.fuse_vertices({ 
+            positions:mesh.positions
+          , faces:mesh.faces
+          , tolerance:0.01 
+        });
+      
       assert.ok(fused.positions.length === 4);
       assert.ok(fused.faces.length === 2);
       
@@ -30,7 +34,11 @@ vows.describe("repair.js").addBatch({
     },
     
     'fusing at tol = 0.0001': function(mesh) {
-      var fused = repair.fuse_vertices(mesh, 0.0001);
+      var fused = repair.fuse_vertices({ 
+            positions:mesh.positions
+          , faces:mesh.faces
+          , tolerance:0.0001 
+        });
       
       assert.ok(fused.positions.length === 5);
       assert.ok(fused.faces.length === 2);
@@ -44,7 +52,11 @@ vows.describe("repair.js").addBatch({
     },
 
     'fusing at tol = 0.000001': function(mesh) {
-      var fused = repair.fuse_vertices(mesh, 0.000001);
+      var fused = repair.fuse_vertices({ 
+            positions:mesh.positions
+          , faces:mesh.faces
+          , tolerance:0.000001 
+        });
       
       assert.ok(fused.positions.length === 6);
       assert.ok(fused.faces.length === 2);
@@ -59,8 +71,12 @@ vows.describe("repair.js").addBatch({
     
     
     'fusing at tol = 2.0': function(mesh) {
-      var fused = repair.fuse_vertices(mesh, 2.0);
-      
+      var fused = repair.fuse_vertices({ 
+            positions: mesh.positions
+          , faces: mesh.faces
+          , tolerance: 2.0
+        });
+              
       assert.ok(fused.positions.length === 1);
       assert.ok(fused.faces.length === 0);
       

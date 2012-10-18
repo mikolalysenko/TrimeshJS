@@ -25,7 +25,10 @@ var cube_vertices = [
       , [0,1,6,4]
       , [5,6,1,4] ];
 
-exports.marching_tetrahedra = function(potential, dims) {
+exports.marching_tetrahedra = function(args) {
+
+  var potential = args.potential;
+  var dims      = args.resolution;
    
    var vertices = []
     , faces = []
