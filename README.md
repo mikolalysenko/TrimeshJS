@@ -47,9 +47,18 @@ Conventions:
 
 # API
 
+
+## Topology
+
 ### `vertex_stars`
 
+
+## Mesh Repair
+
 ### `fuse_vertices`
+
+
+## Implicit Function Modeling
 
 ### `marching_cubes`
 
@@ -57,11 +66,18 @@ Conventions:
 
 ### `surface_nets`
 
+
+## Differential Geometry
+
 ### `vertex_normals`
 
 ### `face_normals`
 
 ### `distance_to_point`
+
+
+
+## Test Shapes
 
 ### `grid_mesh`
 
