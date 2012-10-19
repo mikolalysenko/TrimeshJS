@@ -160,14 +160,6 @@ function surface_distance_to_point(args) {
         
         //Update distance
         if(n_distance < o_distance && Math.abs(n_distance - o_distance) > tolerance) {
-          /*
-          console.log("updating:",
-            "\n\tnew_distance:", n_distance,
-            "\n\tface:", nbhd[nn], ":",  face, 
-            "\n\tverts:", positions[face[0]], positions[face[1]], positions[face[2]], 
-            "\n\tdist:", distances[face[0]], distances[face[1]], distances[face[2]], 
-            "\n\tcenter:", positions[p]);
-          */
           distances[face[2]] = Math.min(o_distance, n_distance);
           stabilized = false;
         }
