@@ -24,7 +24,7 @@ vows.describe("surface normals").addBatch({
         }
         d = Math.sqrt(d);
         
-        assert.ok(d < 1e-2, "Incorrect normal: " + JSON.stringify(n) + " vs. " + JSON.stringify(p) + ", err = " + d);
+        assert.ok(d < 5e-2, "Incorrect normal: " + JSON.stringify(n) + " vs. " + JSON.stringify(p) + ", err = " + d);
       }      
     },
     

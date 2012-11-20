@@ -1,3 +1,7 @@
+// Binary Heap
+// By: Marjin Haverbeke
+// Web: http://eloquentjavascript.net/appendix2.html
+
 function BinaryHeap(scoreFunction){
   this.content = [];
   this.scoreFunction = scoreFunction;
@@ -44,7 +48,6 @@ BinaryHeap.prototype = {
         return;
       }
     }
-    throw new Error("Node not found.");
   },
 
   size: function() {

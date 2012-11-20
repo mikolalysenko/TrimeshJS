@@ -343,7 +343,7 @@ process.nextTick = (function () {
     ;
 
     if (canSetImmediate) {
-        return window.setImmediate;
+        return function (f) { return window.setImmediate(f) };
     }
 
     if (canPost) {
@@ -422,15 +422,28 @@ exports.grid_mesh = shapes.grid_mesh;
 exports.cube_mesh = shapes.cube_mesh;
 exports.sphere_mesh = shapes.sphere_mesh;
 
+//Subdivisions
+exports.loop_subdivision = require('./src/loop_subdivision.js').loop_subdivision;
 
 });
 
-require.define("/src/topology.js",function(require,module,exports,__dirname,__filename,process,global){/**
+require.define("/src/topology.js",function(require,module,exports,__dirname,__filename,process,global){function vmax(faces) {
+  var vc = 0;
+  for(var i=0; i<faces.length; ++i) {
+    var f = faces[i];
+    for(var j=0; j<f.length; ++j) {
+      vc = Math.max(vc, f[j]);
+    }
+  }
+  return vc+1;
+}
+
+/**
  * Returns an array containing the set of all faces incident to each vertex in the mesh.
  */
 exports.vertex_stars = function(args) {
-  var vertex_count  = args.vertex_count;
   var faces         = args.faces;
+  var vertex_count  = args.vertex_count || vmax(faces);
 
   var stars = new Array(vertex_count);
   for(var i=0; i<stars.length; ++i) {
@@ -466,6 +479,35 @@ exports.edges = function(args) {
   }
   
   return edges;
+}
+
+
+var edge_compare = new Function("a", "b", "return a[0] === b[0] ? a[1]-b[1] : a[0]-b[0];");
+
+// Computes the 1-ring around each vertex
+exports.rings = function(args) {
+  var faces = args.faces;
+  var stars = args.stars || exports.vertex_stars(args);
+  var vertex_count = args.vertex_count || stars.length;
+  var rings = new Array(vertex_count);
+  
+  for(var i=0; i<vertex_count; ++i) {
+    var nbhd = stars[i];
+    var edges = [];
+    
+    for(var n=0; n<nbhd.length; ++n) {
+      var f = faces[nbhd[n]];
+      for(var j=0; j<f.length; ++j) {
+        var e = [f[j], f[(j+1)%3]];
+        e.sort();
+        edges.push(e);
+      }
+    }
+    
+    edges.sort(edge_compare);
+    
+    //Extract unique edges store in ring
+  }
 }
 
 
@@ -1561,14 +1603,6 @@ function surface_distance_to_point(args) {
         
         //Update distance
         if(n_distance < o_distance && Math.abs(n_distance - o_distance) > tolerance) {
-          /*
-          console.log("updating:",
-            "\n\tnew_distance:", n_distance,
-            "\n\tface:", nbhd[nn], ":",  face, 
-            "\n\tverts:", positions[face[0]], positions[face[1]], positions[face[2]], 
-            "\n\tdist:", distances[face[0]], distances[face[1]], distances[face[2]], 
-            "\n\tcenter:", positions[p]);
-          */
           distances[face[2]] = Math.min(o_distance, n_distance);
           stabilized = false;
         }
@@ -2712,6 +2746,17 @@ SlowBuffer.prototype.slice = function(start, end) {
   return new Buffer(this, end - start, +start);
 };
 
+SlowBuffer.prototype.copy = function(target, targetstart, sourcestart, sourceend) {
+  var temp = [];
+  for (var i=sourcestart; i<sourceend; i++) {
+    assert.ok(typeof this[i] !== 'undefined', "copying undefined buffer bytes!");
+    temp.push(this[i]);
+  }
+
+  for (var i=targetstart; i<targetstart+temp.length; i++) {
+    target[i] = temp[i-targetstart];
+  }
+};
 
 function coerce(length) {
   // Coerce length to a number (possibly NaN), round up
@@ -2805,6 +2850,35 @@ Buffer.isBuffer = function isBuffer(b) {
   return b instanceof Buffer || b instanceof SlowBuffer;
 };
 
+Buffer.concat = function (list, totalLength) {
+  if (!Array.isArray(list)) {
+    throw new Error("Usage: Buffer.concat(list, [totalLength])\n \
+      list should be an Array.");
+  }
+
+  if (list.length === 0) {
+    return new Buffer(0);
+  } else if (list.length === 1) {
+    return list[0];
+  }
+
+  if (typeof totalLength !== 'number') {
+    totalLength = 0;
+    for (var i = 0; i < list.length; i++) {
+      var buf = list[i];
+      totalLength += buf.length;
+    }
+  }
+
+  var buffer = new Buffer(totalLength);
+  var pos = 0;
+  for (var i = 0; i < list.length; i++) {
+    var buf = list[i];
+    buf.copy(buffer, pos);
+    pos += buf.length;
+  }
+  return buffer;
+};
 
 // Inspect
 Buffer.prototype.inspect = function inspect() {
@@ -3073,7 +3147,7 @@ Buffer.prototype.readUInt8 = function(offset, noAssert) {
         'Trying to read beyond buffer length');
   }
 
-  return buffer[offset];
+  return buffer.parent[buffer.offset + offset];
 };
 
 function readUInt16(buffer, offset, isBigEndian, noAssert) {
@@ -3092,11 +3166,11 @@ function readUInt16(buffer, offset, isBigEndian, noAssert) {
   }
 
   if (isBigEndian) {
-    val = buffer[offset] << 8;
-    val |= buffer[offset + 1];
+    val = buffer.parent[buffer.offset + offset] << 8;
+    val |= buffer.parent[buffer.offset + offset + 1];
   } else {
-    val = buffer[offset];
-    val |= buffer[offset + 1] << 8;
+    val = buffer.parent[buffer.offset + offset];
+    val |= buffer.parent[buffer.offset + offset + 1] << 8;
   }
 
   return val;
@@ -3125,15 +3199,15 @@ function readUInt32(buffer, offset, isBigEndian, noAssert) {
   }
 
   if (isBigEndian) {
-    val = buffer[offset + 1] << 16;
-    val |= buffer[offset + 2] << 8;
-    val |= buffer[offset + 3];
-    val = val + (buffer[offset] << 24 >>> 0);
+    val = buffer.parent[buffer.offset + offset + 1] << 16;
+    val |= buffer.parent[buffer.offset + offset + 2] << 8;
+    val |= buffer.parent[buffer.offset + offset + 3];
+    val = val + (buffer.parent[buffer.offset + offset] << 24 >>> 0);
   } else {
-    val = buffer[offset + 2] << 16;
-    val |= buffer[offset + 1] << 8;
-    val |= buffer[offset];
-    val = val + (buffer[offset + 3] << 24 >>> 0);
+    val = buffer.parent[buffer.offset + offset + 2] << 16;
+    val |= buffer.parent[buffer.offset + offset + 1] << 8;
+    val |= buffer.parent[buffer.offset + offset];
+    val = val + (buffer.parent[buffer.offset + offset + 3] << 24 >>> 0);
   }
 
   return val;
@@ -3205,12 +3279,12 @@ Buffer.prototype.readInt8 = function(offset, noAssert) {
         'Trying to read beyond buffer length');
   }
 
-  neg = buffer[offset] & 0x80;
+  neg = buffer.parent[buffer.offset + offset] & 0x80;
   if (!neg) {
-    return (buffer[offset]);
+    return (buffer.parent[buffer.offset + offset]);
   }
 
-  return ((0xff - buffer[offset] + 1) * -1);
+  return ((0xff - buffer.parent[buffer.offset + offset] + 1) * -1);
 };
 
 function readInt16(buffer, offset, isBigEndian, noAssert) {
@@ -3844,7 +3918,11 @@ exports.writeIEEE754 = function(buffer, value, offset, isBE, mLen, nBytes) {
 
 });
 
-require.define("/src/heap.js",function(require,module,exports,__dirname,__filename,process,global){function BinaryHeap(scoreFunction){
+require.define("/src/heap.js",function(require,module,exports,__dirname,__filename,process,global){// Binary Heap
+// By: Marjin Haverbeke
+// Web: http://eloquentjavascript.net/appendix2.html
+
+function BinaryHeap(scoreFunction){
   this.content = [];
   this.scoreFunction = scoreFunction;
 }
@@ -3890,7 +3968,6 @@ BinaryHeap.prototype = {
         return;
       }
     }
-    throw new Error("Node not found.");
   },
 
   size: function() {
@@ -4085,6 +4162,119 @@ function sphere_mesh(args) {
 exports.grid_mesh = grid_mesh;
 exports.cube_mesh = cube_mesh;
 exports.sphere_mesh = sphere_mesh;
+
+});
+
+require.define("/src/loop_subdivision.js",function(require,module,exports,__dirname,__filename,process,global){var topology = require('./topology.js');
+
+function opposite(u, v, f) {
+  for(var i=0; i<3; ++i) {
+    if(f[i] !== u && f[i] !== v) {
+      return f[i];
+    }
+  }
+  return 0;
+}
+
+//A super inefficient implementation of Loop's algorithm
+exports.loop_subdivide = function(args) {
+  var positions   = args.positions;
+  var faces       = args.faces;
+  var edges       = args.edges || topology.edges({faces: faces});
+  var stars       = args.stars || topology.vertex_stars({ vertex_count: positions.length, faces: faces });
+  var npositions  = [];
+  var nfaces      = [];
+  var e_indices   = {};
+  var v_indices   = new Array(positions.length);  
+  
+  var e_verts = new Array(3);
+  var v_verts = new Array(3);
+  
+  for(var f=0; f<faces.length; ++f) {
+    var face = faces[f];
+    
+    for(var d=0; d<3; ++d) {
+      var v = face[d];
+      var u = face[(d+1)%3];
+      var e = [u,v];
+      e.sort();
+      
+      if(e in e_indices) {
+        e_verts[d] = e_indices[e];
+      } else {
+        //Compute edge-vertex
+        var wing = edges[e];
+        var v0 = positions[u];
+        var v1 = positions[v];
+        var vertex = new Array(3);
+        
+        if(wing.length === 2) {
+          var v2 = positions[opposite(u, v, faces[wing[0]])];
+          var v3 = positions[opposite(u, v, faces[wing[1]])];
+          
+          for(var i=0; i<3; ++i) {
+            vertex[i] = (3.0 * (v0[i] + v1[i]) + v2[i] + v3[i]) / 8.0;
+          }
+        } else {
+          for(var i=0; i<3; ++i) {
+            vertex[i] = 0.5 * (v0[i] + v1[i]);
+          }
+        }
+        
+        //Store vertex and continue
+        e_indices[e] = e_verts[d] = npositions.length;
+        npositions.push(vertex);
+      }
+      
+      if(v in v_indices) {
+        v_verts[d] = v_indices[v];
+      } else {
+        //Compute vertex-vertex weight
+        
+        //First, extract vertex neighborhood (slow and stupid here)
+        var star = stars[v];
+        var nbhd = [v];
+        for(var i=0; i<star.length; ++i) {
+          var tri = faces[star[i]];
+          for(var j=0; j<3; ++j) {
+            if(nbhd.indexOf(tri[j]) !== -1) {
+              nbhd.push(tri[j]);
+            }
+          }
+        }
+        
+        //Next, compute weights
+        var beta = (star.length === 3 ? 3.0/16.0 : 3.0/(8.0*star.length) );
+        var center_weight = 1.0 - star.length * beta;
+        
+        //Finally sum up weights
+        var pos  = positions[v];
+        var vertex = new Array(3);
+        for(var i=0; i<3; ++i) {
+          vertex[i] = center_weight * pos[i];
+        }
+        for(var i=1; i<nbhd.length; ++i) {
+          var p = positions[nbhd[i]];
+          for(var j=0; j<3; ++j) {
+            vertex[j] += beta * p[j];
+          }
+        }
+
+        //Store result and continue        
+        v_verts[d] = v_indices[v] = npositions.length;
+        npositions.push(vertex);
+      }
+    }
+    
+    //Add subdivided faces
+    nfaces.push([v_verts[0], e_verts[0], e_verts[2]]);
+    nfaces.push([e_verts[0], e_verts[1], e_verts[2]]);
+    nfaces.push([e_verts[0], v_verts[1], e_verts[1]]);
+    nfaces.push([e_verts[1], v_verts[2], e_verts[2]]);
+  }
+  
+  return { positions: npositions, faces: nfaces };
+};
 
 });
 
