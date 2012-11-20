@@ -18,7 +18,7 @@ exports.vertex_normals = normals.vertex_normals;
 exports.face_normals = normals.face_normals;
 
 //Surface distance
-exports.surface_distance_to_point = require('./src/metric.js').surface_distance_to_point;
+exports.surface_distance_to_point = require('./src/distance.js').surface_distance_to_point;
 
 //Test shapes
 var shapes = require('./src/shapes.js');
@@ -26,3 +26,5 @@ exports.grid_mesh = shapes.grid_mesh;
 exports.cube_mesh = shapes.cube_mesh;
 exports.sphere_mesh = shapes.sphere_mesh;
 
+//Subdivisions
+exports.loop_subdivision = require('./src/loop_subdivision.js').loop_subdivision;

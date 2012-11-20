@@ -1,6 +1,6 @@
 {
   "name": "trimesh",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Tools for processing triangulated meshes in Javascript",
   "main": "index.js",
   "author": {
