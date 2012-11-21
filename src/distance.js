@@ -54,23 +54,16 @@ function quadratic_distance(a, b, c, dpa, dpb, orientation) {
   
 }
 
-//Computes a distances to a vertex p
-function surface_distance_to_point(args) {
+function Pair(d,v) {
+  this.d = d;
+  this.v = v;
+}
 
-  var positions   = args.positions;
-  var faces       = args.faces;
-  var p           = args.initial_vertex;
-  var stars       = args.stars 
-                  || vertex_stars({ vertex_count: positions.length, faces: faces });
-  var max_distance = args.max_distance 
-                  || Number.POSITIVE_INFINITY;
-  var tolerance   = args.tolerance || 1e-4;
 
-  //First, run Dijkstra's algorithm to get an initial bound on the distance from each vertex
-  // to the base point just using edge lengths
+function dijkstra(p, stars, faces, positions, max_distance) {
   var to_visit  = new BinaryHeap(new Function("a", "return a.d;"));
-  var distances = [];
-  to_visit.push({d:0, v:p});
+  var distances = {};
+  to_visit.push(new Pair(0, p));
   
   while(to_visit.size() > 0) {
     var node = to_visit.pop();
@@ -100,22 +93,26 @@ function surface_distance_to_point(args) {
         }
         dist = Math.sqrt(dist) + d;
         
-        //NOTE: This is quite correct, since we only have an upper bound on dist, not a lower bound...
+        //NOTE: This is not quite correct, since we only have an upper bound on dist, not a lower bound...
         if(dist <= max_distance) {
-          to_visit.push({d: dist, v:u});
+          to_visit.push(new Pair(dist,u));
         }
       }
     }
   }
-  
+  return distances;
+}
+
+function refine_distances(p, distances, positions, stars, faces, max_distance, tolerance) {
   //Unpack distances into an array for easier processing
   function compare_func(a, b) {
     return distances[a] - distances[b];
   }
   
   //Next, we do several passes to refine the initial bound on the distance until we get something that approaches the true distance to p
-  while(true) {
-    var stabilized = true;
+  var stabilized = false;
+  while(!stabilized) {
+    stabilized = true;
 
     //First, sort vertices by distance
     var vertices = [];
@@ -165,12 +162,30 @@ function surface_distance_to_point(args) {
         }
       }
     }
-  
-    //Once distances are stable, return result
-    if(stabilized) {
-      return distances;
-    }
   }
+}
+
+
+//Computes a distances to a vertex p
+function surface_distance_to_point(args) {
+
+  var positions   = args.positions;
+  var faces       = args.faces;
+  var p           = args.initial_vertex;
+  var stars       = args.stars 
+                  || vertex_stars({ vertex_count: positions.length, faces: faces });
+  var max_distance = args.max_distance 
+                  || Number.POSITIVE_INFINITY;
+  var tolerance   = args.tolerance || 1e-4;
+
+  //First, run Dijkstra's algorithm to get an initial bound on the distance from each vertex
+  // to the base point just using edge lengths
+  var distances = dijkstra(p, stars, faces, positions, max_distance);
+  
+  //Then refine distances to acceptable threshold
+  refine_distances(p, distances, positions, stars, faces, max_distance, tolerance);
+  
+  return distances;
 }
 
 exports.quadratic_distance = quadratic_distance;
