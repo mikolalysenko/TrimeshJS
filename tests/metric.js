@@ -68,7 +68,7 @@ vows.describe("distance.js").addBatch({
       //Testing pairwise distances
       for(var j=0; j<mesh.positions.length; ++j) {
         var p = mesh.positions[j];
-        var distances = distance.surface_distance_to_point({
+        var distances = distance.geodesic_distance({
           positions:mesh.positions,
           faces: mesh.faces,
           initial_vertex: j
@@ -94,7 +94,7 @@ vows.describe("distance.js").addBatch({
       
         for(var i=0; i<100; ++i) {
           var p_idx = Math.floor(Math.random() * sphere.positions.length);
-          var distances = distance.surface_distance_to_point({
+          var distances = distance.geodesic_distance({
             positions: sphere.positions,
             faces: sphere.faces, 
             initial_vertex: p_idx, 
@@ -103,6 +103,10 @@ vows.describe("distance.js").addBatch({
           var p = sphere.positions[p_idx];
           
           for(var j in distances) {
+            if(distances[j] > Math.PI/4) {
+              continue;
+            }
+          
             var q = sphere.positions[j];
             var angle = 0.0;
             for(var k=0; k<3; ++k) {

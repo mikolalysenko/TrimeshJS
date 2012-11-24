@@ -65,6 +65,9 @@ function dijkstra(p, stars, faces, positions, max_distance) {
   var distances = {};
   to_visit.push(new Pair(0, p));
   
+  var center = positions[p];
+  var msquared = max_distance * max_distance;
+  
   while(to_visit.size() > 0) {
     var node = to_visit.pop();
     if(node.v in distances) {
@@ -87,15 +90,15 @@ function dijkstra(p, stars, faces, positions, max_distance) {
         }
         var b = positions[u];
         
-        var dist = 0.0;
+        var dist = 0.0, ldist = 0.0;
         for(var k=0; k<3; ++k) {
           dist += Math.pow(a[k] - b[k], 2);
+          ldist += Math.pow(center[k] - b[k], 2)
         }
-        dist = Math.sqrt(dist) + d;
         
         //NOTE: This is not quite correct, since we only have an upper bound on dist, not a lower bound...
-        if(dist <= max_distance) {
-          to_visit.push(new Pair(dist,u));
+        if(ldist <= msquared) {
+          to_visit.push(new Pair(Math.sqrt(dist) + d,u));
         }
       }
     }
@@ -167,7 +170,7 @@ function refine_distances(p, distances, positions, stars, faces, max_distance, t
 
 
 //Computes a distances to a vertex p
-function surface_distance_to_point(args) {
+function geodesic_distance(args) {
 
   var positions   = args.positions;
   var faces       = args.faces;
@@ -189,4 +192,4 @@ function surface_distance_to_point(args) {
 }
 
 exports.quadratic_distance = quadratic_distance;
-exports.surface_distance_to_point = surface_distance_to_point;
+exports.geodesic_distance = geodesic_distance;

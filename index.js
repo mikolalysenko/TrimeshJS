@@ -18,7 +18,7 @@ exports.vertex_normals = normals.vertex_normals;
 exports.face_normals = normals.face_normals;
 
 //Surface distance
-exports.surface_distance_to_point = require('./src/distance.js').surface_distance_to_point;
+exports.geodesic_distance = require('./src/distance.js').geodesic_distance;
 
 //Test shapes
 var shapes = require('./src/shapes.js');
