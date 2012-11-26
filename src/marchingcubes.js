@@ -313,6 +313,13 @@ var edgeTable= new Uint32Array([
 exports.marching_cubes = function(args) {
   var potential = args.potential;
   var dims      = args.resolution;
+  var bounds    = args.bounds || [[0,0,0], dims];
+  var scale     = [0,0,0];
+  var shift     = [0,0,0];
+  for(var i=0; i<3; ++i) {
+    scale[i] = (bounds[1][i] - bounds[0][i]) / dims[i];
+    shift[i] = bounds[0][i];
+  }
 
   var vertices = []
     , faces = []
@@ -328,7 +335,10 @@ exports.marching_cubes = function(args) {
     var cube_index = 0;
     for(var i=0; i<8; ++i) {
       var v = cubeVerts[i]
-        , s = potential(x[0]+v[0], x[1]+v[1], x[2]+v[2]);
+        , s = potential(
+          scale[0]*(x[0]+v[0])+shift[0],
+          scale[1]*(x[1]+v[1])+shift[1],
+          scale[2]*(x[2]+v[2])+shift[2]);
       grid[i] = s;
       cube_index |= (s > 0) ? 1 << i : 0;
     }
@@ -354,7 +364,7 @@ exports.marching_cubes = function(args) {
         t = a / d;
       }
       for(var j=0; j<3; ++j) {
-        nv[j] = (x[j] + p0[j]) + t * (p1[j] - p0[j]);
+        nv[j] = scale[j] * ((x[j] + p0[j]) + t * (p1[j] - p0[j])) + shift[j];
       }
       vertices.push(nv);
     }

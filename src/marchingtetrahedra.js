@@ -29,6 +29,13 @@ exports.marching_tetrahedra = function(args) {
 
   var potential = args.potential;
   var dims      = args.resolution;
+  var bounds    = args.bounds || [[0,0,0], dims];
+  var scale     = [0,0,0];
+  var shift     = [0,0,0];
+  for(var i=0; i<3; ++i) {
+    scale[i] = (bounds[1][i] - bounds[0][i]) / dims[i];
+    shift[i] = bounds[0][i];
+  }
    
    var vertices = []
     , faces = []
@@ -48,7 +55,7 @@ exports.marching_tetrahedra = function(args) {
       t = g0 / t;
     }
     for(var i=0; i<3; ++i) {
-      v[i] += p0[i] + t * (p1[i] - p0[i]);
+      v[i] = scale[i] * (v[i] + p0[i] + t * (p1[i] - p0[i])) + shift[i];
     }
     vertices.push(v);
     return vertices.length - 1;
@@ -61,7 +68,10 @@ exports.marching_tetrahedra = function(args) {
     //Read in cube  
     for(var i=0; i<8; ++i) {
       var cube_vert = cube_vertices[i];
-      grid[i] = potential(x[0]+cube_vert[0], x[1]+cube_vert[1], x[2]+cube_vert[2]);
+      grid[i] = potential(
+        scale[0]*(x[0]+cube_vert[0])+shift[0],
+        scale[1]*(x[1]+cube_vert[1])+shift[1],
+        scale[2]*(x[2]+cube_vert[2])+shift[2]);
     }
     for(var i=0; i<tetra_list.length; ++i) {
       var T = tetra_list[i]

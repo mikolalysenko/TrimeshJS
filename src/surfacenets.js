@@ -55,6 +55,15 @@ exports.surface_nets = function(args) {
 
   var potential = args.potential;
   var dims      = args.resolution;
+  var bounds    = args.bounds || [[0,0,0], dims];
+  var scale     = [0,0,0];
+  var shift     = [0,0,0];
+  for(var i=0; i<3; ++i) {
+    scale[i] = (bounds[1][i] - bounds[0][i]) / dims[i];
+    shift[i] = bounds[0][i];
+  }
+
+  
   
   var vertices = []
     , faces = []
@@ -63,6 +72,7 @@ exports.surface_nets = function(args) {
     , R = [1, (dims[0]+1), (dims[0]+1)*(dims[0]+1)]
     , grid = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
     , buf_no = 1;
+  
    
   //Resize buffer if necessary 
   if(R[2] * 2 > buffer.length) {
@@ -90,7 +100,10 @@ exports.surface_nets = function(args) {
       for(var k=0; k<2; ++k)
       for(var j=0; j<2; ++j)      
       for(var i=0; i<2; ++i, ++g) {
-        var p = potential(x[0]+i, x[1]+j, x[2]+k);
+        var p = potential(
+          scale[0]*(x[0]+i)+shift[0],
+          scale[1]*(x[1]+j)+shift[1],
+          scale[2]*(x[2]+k)+shift[2]);
         grid[g] = p;
         mask |= (p < 0) ? (1<<g) : 0;
       }
@@ -143,7 +156,7 @@ exports.surface_nets = function(args) {
       //Now we just average the edge intersections and add them to coordinate
       var s = 1.0 / e_count;
       for(var i=0; i<3; ++i) {
-        v[i] = x[i] + s * v[i];
+        v[i] = scale[i] * (x[i] + s * v[i]) + shift[i];
       }
       
       //Add vertex to buffer, store pointer to vertex index in buffer

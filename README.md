@@ -23,9 +23,7 @@ Add a reference to the script in your header:
 
     <script src="trimesh.min.js"></script>
     
-Which will create an object called `trimesh` in the global namespace that contains the API:
-
-    var mesh = trimesh.grid_mesh(10, 10);
+Which will create an object called `trimesh` in the global namespace that contains the API.
 
 ## Getting Test Data
 
@@ -116,35 +114,91 @@ Welds nearby vertices together, removing small cracks and sliver faces within a 
 
 ## Implicit Function Modeling
 
-### `marching_cubes`
+Trimesh.JS has 3 different methods for converting implicit functions into triangulated meshes.  They each take the same arguments and produce similar results.  For more information about the differences, see the following post: http://0fps.wordpress.com/2012/07/12/smooth-voxel-terrain-part-2/
 
-### `marching_tetrahedra`
 
-### `surface_nets`
+### `marching_cubes`, `marching_tetrahedra`, `surface_nets`
+
+#### Parameters:
+
+* `potential` : A function f(x,y,z) that represents the potential function.  (<0 for in, >0 for out)
+* `resolution` : A triple [nx,ny,nz] representing the resolution of the isosurface
+* `bounds`:  (Optional) A pair of ranges [[x0,y0,z0], [x1,y1,z1]] representing the bounds for the volume.
+
+#### Returns:
+
+* `positions`: The positions of the vertices on the isosurface
+* `faces`: The faces of the isosurface
+
+#### Running time: Makes `O(nx * ny * nz)` calls to `potential()`.
+
 
 
 ## Differential Geometry
 
 ### `vertex_normals`
 
+#### Parameters:
+
+* `positions`
+* `faces`
+* `stars` (Optional)
+
+#### Returns:
+
+An array representing an estimate for the normals of the mesh computed using cotangent weights.
+
+#### Running time: `O( |stars| )`
+
 ### `face_normals`
 
-### `distance_to_point`
+#### Parameters:
 
+* `positions`
+* `faces`
 
+#### Returns:
+
+An array of normals for each face
+
+#### Running time: `O( number of faces )`
+
+### `geodesic_distance`
+
+#### Parameters:
+
+* `initial_vertex`
+* `positions`
+* `faces`
+* `max_distance` (Optional)
+* `stars` (Optional)
+
+#### Returns:
+
+Hash map of distance to point
+
+#### Running Time: Worse than `O( number of vertices^2 )`  (bad)
+
+#### Notes:
+
+The current implementation of this method is bad.
 
 ## Subdivision Surfaces
 
 ### `loop_subdivision`
 
+Evaluates one iteration of Loop's algorithm
 
-## Test Shapes
+#### Parameters:
 
-### `grid_mesh`
+* `positions`
+* `faces`
+* `stars` (Optional)
 
-### `cube_mesh`
+#### Returns:
 
-### `sphere_mesh` 
+* `positions`
+* `faces`
 
 
 

@@ -10,6 +10,17 @@ vows.describe('subdivision.js').addBatch({
     'subdivide': function(mesh) {
       var subdiv = loop_subdivision(mesh);
       assert.ok(subdiv.faces.length === 4*mesh.faces.length);
+    },
+    
+    'triangle': function() {
+      var positions = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      var faces    = [[0,1,2]];
+      
+      var mesh = { positions: positions, faces: faces };
+      for(var i=0; i<2; ++i) {
+        mesh = loop_subdivision(mesh);
+        console.log(mesh);
+      }
     }
   }
 }).run();

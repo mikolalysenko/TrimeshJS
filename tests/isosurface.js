@@ -6,15 +6,9 @@ var surface_nets = require('../src/surfacenets.js').surface_nets;
 
 var TOLERANCE = 1e-3;
 
-var sphere_radius = 20.0;
-var sphere_center = [sphere_radius+2, sphere_radius+2, sphere_radius+2];
-var sphere_dims = [ 44, 44, 44 ];
 
 function sphere(x,y,z) {
-  return Math.sqrt(Math.pow(x - sphere_center[0], 2)
-    + Math.pow(x - sphere_center[1], 2)
-    + Math.pow(x - sphere_center[2], 2))
-    - sphere_radius;
+  return Math.sqrt(x*x + y*y + z*z) - 1.0;
 }
 
 function validate_surface(mesh, potential) {
@@ -30,8 +24,9 @@ vows.describe("isosurfaces").addBatch({
   'sphere': {
     
     topic: {
-        potential: sphere
-      , resolution: sphere_dims
+        potential:  sphere
+      , resolution: [64,64,64]
+      , bounds:     [[-1.5, -1.5, -1.5], [1.5,1.5,1.5]]
     },
     
     'marching cubes': function(field) {
