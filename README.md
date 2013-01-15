@@ -1,5 +1,7 @@
 # trimesh.js
 
+(DEPRECATED WARNING:  I am currently in the process of splitting the functionality in trimesh.js up into smaller libraries.  This is still an ongoing process.)
+
 ... is an ever expanding collection of algorithms for processing triangulated meshes in Javascript.
 
 ## Server side (node.js)

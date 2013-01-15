@@ -54,4 +54,16 @@ function fuse_vertices(args) {
   return { positions: n_positions, faces: n_faces };
 };
 
+//Triangulates a collection of convex polyhedra (needed for non-triangular meshes)
+function triangulate(faces) {
+  var result = [];
+  for(var i=0; i<faces.length; ++i) {
+    var f = faces[i];
+    for(var j=2; j<f.length; ++j) {
+      result.push([f[0], f[j-1], f[j]]);
+    }
+  }
+  return result;
+}
+
 exports.fuse_vertices = fuse_vertices;
